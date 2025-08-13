@@ -4,8 +4,8 @@ const pool = new Pool({
   host: process.env.DB_HOST || "localhost",
   port: process.env.DB_PORT || 5432,
   database: process.env.DB_NAME || "clearlyai_db",
-  user: process.env.DB_USER || "clearlyai_user",
-  password: process.env.DB_PASSWORD || "your_secure_password",
+  user: process.env.DB_USER || "clearlyAI",
+  password: process.env.DB_PASSWORD || "clearly_postgres",
   max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
@@ -93,7 +93,7 @@ const initDatabase = async () => {
     if (adminCheck.rows.length === 0) {
       const bcrypt = require("bcryptjs");
       const hashedPassword = await bcrypt.hash(
-        process.env.ADMIN_PASSWORD || "admin_secure_password",
+        process.env.ADMIN_PASSWORD || "admin_secure_password_2024",
         10
       );
 

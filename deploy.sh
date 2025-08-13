@@ -39,9 +39,9 @@ sudo apt install -y certbot python3-certbot-nginx
 # Configure PostgreSQL
 echo "🔧 Configuring PostgreSQL..."
 sudo -u postgres psql -c "CREATE DATABASE clearlyai_db;"
-sudo -u postgres psql -c "CREATE USER clearlyai_user WITH PASSWORD 'clearlyai_secure_password_2024';"
-sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE clearlyai_db TO clearlyai_user;"
-sudo -u postgres psql -c "ALTER USER clearlyai_user CREATEDB;"
+sudo -u postgres psql -c "CREATE USER \"clearlyAI\" WITH PASSWORD 'clearly_postgres';"
+sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE clearlyai_db TO \"clearlyAI\";"
+sudo -u postgres psql -c "ALTER USER \"clearlyAI\" CREATEDB;"
 
 # Configure Redis
 echo "🔧 Configuring Redis..."
@@ -72,8 +72,8 @@ FRONTEND_URL=https://eznotespro.netlify.app
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=clearlyai_db
-DB_USER=clearlyai_user
-DB_PASSWORD=clearlyai_secure_password_2024
+DB_USER=clearlyAI
+DB_PASSWORD=clearly_postgres
 
 REDIS_HOST=localhost
 REDIS_PORT=6379
@@ -82,7 +82,7 @@ REDIS_PASSWORD=
 JWT_SECRET=clearlyai_super_secret_jwt_key_2024_production
 JWT_EXPIRES_IN=24h
 
-MAX_FILE_SIZE=100MB
+MAX_FILE_SIZE=100
 UPLOAD_PATH=/var/www/clearlyai-server/uploads
 TEMP_PATH=/var/www/clearlyai-server/temp
 

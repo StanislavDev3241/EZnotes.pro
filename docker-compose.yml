@@ -1,0 +1,79 @@
+version: "3.8"
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: clearlyai-postgres
+    environment:
+      POSTGRES_DB: clearlyai_db
+      POSTGRES_USER: clearlyai_user
+      POSTGRES_PASSWORD: clearlyai_secure_password_2024
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - clearlyai-network
+    restart: unless-stopped
+
+  # Redis for Queue Management
+  redis:
+    image: redis:7-alpine
+    container_name: clearlyai-redis
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - clearlyai-network
+    restart: unless-stopped
+
+  # Node.js Server
+  server:
+    build: .
+    container_name: clearlyai-server
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      FRONTEND_URL: https://eznotespro.netlify.app
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: clearlyai_db
+      DB_USER: clearlyai_user
+      DB_PASSWORD: clearlyai_secure_password_2024
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: clearlyai_super_secret_jwt_key_2024_development
+      JWT_EXPIRES_IN: 24h
+      MAX_FILE_SIZE: 100
+      UPLOAD_PATH: /app/uploads
+      TEMP_PATH: /app/temp
+      MAKE_WEBHOOK_URL: https://hook.us2.make.com/xw5ld4jn0by5jn7hg1bups02srki06f8
+      MAKE_API_KEY: masked-api-key-value
+      DEFAULT_RETENTION_DAYS: 14
+      ADMIN_EMAIL: admin@clearlyai.com
+      ADMIN_PASSWORD: admin_secure_password_2024
+      RATE_LIMIT_WINDOW_MS: 900000
+      RATE_LIMIT_MAX_REQUESTS: 100
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./temp:/app/temp
+      - ./logs:/app/logs
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - clearlyai-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  clearlyai-network:
+    driver: bridge

@@ -35,7 +35,7 @@ services:
     build: .
     container_name: clearlyai-server
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
       PORT: 3001
       FRONTEND_URL: https://eznotespro.netlify.app
       DB_HOST: postgres
@@ -45,7 +45,7 @@ services:
       DB_PASSWORD: clearlyai_secure_password_2024
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      JWT_SECRET: clearlyai_super_secret_jwt_key_2024_development
+      JWT_SECRET: clearlyai_super_secret_jwt_key_2024_production
       JWT_EXPIRES_IN: 24h
       MAX_FILE_SIZE: 100
       UPLOAD_PATH: /app/uploads

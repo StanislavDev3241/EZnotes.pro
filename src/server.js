@@ -18,6 +18,10 @@ app.use(
       "http://localhost:3000",
       "http://127.0.0.1:5173",
       "http://127.0.0.1:3000",
+      "http://83.229.115.190:3001",
+      "http://83.229.115.190",
+      "https://83.229.115.190",
+      "https://83.229.115.190:3001",
     ],
     credentials: true,
   })
@@ -61,5 +65,7 @@ app.use("*", (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 ClearlyAI Server running on port ${PORT}`);
   console.log(`📁 Environment: ${process.env.NODE_ENV || "development"}`);
+  console.log(`🌐 Frontend URL: ${process.env.FRONTEND_URL || "https://eznotespro.netlify.app"}`);
   console.log(`🔒 Health check: http://localhost:${PORT}/health`);
+  console.log(`🔒 External health check: http://83.229.115.190:${PORT}/health`);
 });

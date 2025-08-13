@@ -1,5 +1,5 @@
 const express = require("express");
-const { authenticateToken } = require("../middleware/auth");
+const { optionalAuth } = require("../middleware/auth");
 const {
   upload,
   handleUploadError,
@@ -13,10 +13,10 @@ const fs = require("fs-extra");
 
 const router = express.Router();
 
-// File upload endpoint
+// File upload endpoint - allows both authenticated and anonymous uploads
 router.post(
   "/",
-  authenticateToken,
+  optionalAuth,
   upload.single("file"),
   async (req, res) => {
     let tempFilePath = null;
@@ -35,15 +35,25 @@ router.post(
         originalName: file.originalname,
         fileSize: file.size,
         fileType: file.mimetype,
-        userId: req.user.id,
+        userId: null, // Will be set below
       };
+
+      // Handle anonymous uploads (no user authentication)
+      let userId = null;
+      if (req.user) {
+        userId = req.user.id;
+        fileInfo.userId = userId;
+        console.log(`📁 Authenticated upload by user ${req.user.email}: ${fileInfo.originalName} (${fileInfo.filename})`);
+      } else {
+        console.log(`📁 Anonymous upload: ${fileInfo.originalName} (${fileInfo.filename})`);
+      }
 
       console.log(
         `📁 File uploaded: ${fileInfo.originalName} (${fileInfo.filename})`
       );
 
       // Move file from temp to uploads directory
-      const uploadPath = await moveToUploads(tempFilePath, file.filename);
+      const uploadPath = await moveToUploads(tempFilePath, fileInfo.filename);
       tempFilePath = null; // Clear temp path since file was moved
 
       // Save file info to database
@@ -59,7 +69,7 @@ router.post(
           uploadPath,
           fileInfo.fileSize,
           fileInfo.fileType,
-          fileInfo.userId,
+          userId,
         ]
       );
 
@@ -71,7 +81,7 @@ router.post(
       INSERT INTO tasks (file_id, user_id, task_type, status, priority)
       VALUES ($1, $2, 'file_processing', 'pending', 1)
     `,
-        [fileId, req.user.id]
+        [fileId, userId]
       );
 
       // Add job to processing queue
@@ -84,7 +94,7 @@ router.post(
           filePath: uploadPath,
           fileSize: fileInfo.fileSize,
           fileType: fileInfo.fileType,
-          userId: req.user.id,
+          userId: userId,
         },
         {
           priority: 1,
@@ -116,7 +126,7 @@ router.post(
               originalName: fileInfo.originalName,
               fileSize: fileInfo.fileSize,
               fileType: fileInfo.fileType,
-              userId: req.user.id,
+              userId: userId,
               timestamp: new Date().toISOString(),
             }),
           });
@@ -194,7 +204,7 @@ router.post(
 );
 
 // Get upload status
-router.get("/status/:fileId", authenticateToken, async (req, res) => {
+router.get("/status/:fileId", optionalAuth, async (req, res) => {
   try {
     const { fileId } = req.params;
 
@@ -205,7 +215,7 @@ router.get("/status/:fileId", authenticateToken, async (req, res) => {
       LEFT JOIN tasks t ON f.id = t.file_id AND t.task_type = 'file_processing'
       WHERE f.id = $1 AND f.user_id = $2
     `,
-      [fileId, req.user.id]
+      [fileId, req.user ? req.user.id : null] // Pass null for anonymous users
     );
 
     if (fileResult.rows.length === 0) {
@@ -234,7 +244,7 @@ router.get("/status/:fileId", authenticateToken, async (req, res) => {
 });
 
 // Delete uploaded file (HIPAA compliance)
-router.delete("/:fileId", authenticateToken, async (req, res) => {
+router.delete("/:fileId", optionalAuth, async (req, res) => {
   try {
     const { fileId } = req.params;
 
@@ -243,7 +253,7 @@ router.delete("/:fileId", authenticateToken, async (req, res) => {
       `
       SELECT * FROM files WHERE id = $1 AND user_id = $2
     `,
-      [fileId, req.user.id]
+      [fileId, req.user ? req.user.id : null] // Pass null for anonymous users
     );
 
     if (fileResult.rows.length === 0) {

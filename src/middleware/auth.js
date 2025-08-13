@@ -56,6 +56,44 @@ const requireOwnershipOrAdmin = (resourceUserId) => {
   };
 };
 
+// Optional authentication - allows requests with or without token
+const optionalAuth = async (req, res, next) => {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+
+  if (!token) {
+    // No token provided, continue without authentication
+    req.user = null;
+    return next();
+  }
+
+  try {
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || "your_super_secret_jwt_key_here"
+    );
+
+    // Get user from database
+    const userResult = await pool.query(
+      "SELECT id, email, role FROM users WHERE id = $1",
+      [decoded.userId]
+    );
+
+    if (userResult.rows.length === 0) {
+      // Invalid token, continue without authentication
+      req.user = null;
+      return next();
+    }
+
+    req.user = userResult.rows[0];
+    next();
+  } catch (error) {
+    // Token error, continue without authentication
+    req.user = null;
+    next();
+  }
+};
+
 // Rate limiting middleware
 const rateLimit = require("express-rate-limit");
 
@@ -75,5 +113,6 @@ module.exports = {
   authenticateToken,
   requireAdmin,
   requireOwnershipOrAdmin,
+  optionalAuth,
   createRateLimiter,
 };
